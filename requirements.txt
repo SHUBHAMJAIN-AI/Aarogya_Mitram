@@ -1,0 +1,19 @@
+# Core Dependencies for Sex Education Chatbot
+# =============================================
+
+# CrewAI framework with tools
+crewai[tools]>=0.83.0,<1.0.0
+
+# Web framework
+flask>=2.3.0
+flask-cors>=4.0.0
+
+# Testing (optional but recommended)
+pytest>=7.0.0
+pytest-cov>=4.0.0
+requests>=2.28.0
+
+# Development tools (optional)
+black>=23.0.0
+flake8>=6.0.0
+mypy>=1.0.0

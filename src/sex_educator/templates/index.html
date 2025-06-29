@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aarogya Mitram - Sex Education Chatbot</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="chat-header">
+            <div class="header-content">
+                <div class="bot-avatar">
+                    <i class="fas fa-heart"></i>
+                </div>
+                <div class="bot-info">
+                    <h1>Aarogya Mitram</h1>
+                    <p class="bot-subtitle">Your trusted companion for health education</p>
+                    <div class="status-indicator">
+                        <span class="status-dot online"></span>
+                        <span class="status-text">Ready to help</span>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <button class="reset-btn" onclick="resetConversation()" title="Start New Conversation">
+                        <i class="fas fa-refresh"></i>
+                    </button>
+                    <button class="info-btn" onclick="toggleInfo()" title="Information">
+                        <i class="fas fa-info-circle"></i>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Info Panel -->
+        <div class="info-panel" id="infoPanel">
+            <div class="info-content">
+                <h3><i class="fas fa-shield-alt"></i> Safe & Confidential</h3>
+                <p>Your conversations are private and secure. I provide medically accurate, age-appropriate information.</p>
+                
+                <h3><i class="fas fa-heart"></i> What I Can Help With</h3>
+                <ul>
+                    <li>Understanding puberty and body changes</li>
+                    <li>Healthy relationships and communication</li>
+                    <li>Consent and boundaries</li>
+                    <li>Sexual health and safety</li>
+                    <li>Cultural and social aspects</li>
+                </ul>
+
+                <h3><i class="fas fa-phone"></i> Need Immediate Help?</h3>
+                <div class="emergency-contacts">
+                    <p><strong>Emergency:</strong> 112</p>
+                    <p><strong>Women's Helpline:</strong> 1091</p>
+                    <p><strong>Mental Health:</strong> 9152987821</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Messages -->
+        <div class="chat-messages" id="chatMessages">
+            <div class="welcome-message">
+                <div class="message bot-message">
+                    <div class="message-avatar">
+                        <i class="fas fa-heart"></i>
+                    </div>
+                    <div class="message-content">
+                        <div class="message-bubble">
+                            <p>🌟 Namaste! I'm Aarogya Mitram, your trusted companion for health education.</p>
+                            <p>I'm here to provide accurate, age-appropriate, and culturally sensitive information about relationships, health, and well-being.</p>
+                            <p>Feel free to ask me anything - your privacy is completely protected. 🌸</p>
+                        </div>
+                        <div class="message-time">Just now</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Typing Indicator -->
+        <div class="typing-indicator" id="typingIndicator" style="display: none;">
+            <div class="message bot-message">
+                <div class="message-avatar">
+                    <i class="fas fa-heart"></i>
+                </div>
+                <div class="message-content">
+                    <div class="typing-dots">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Input -->
+        <div class="chat-input-container">
+            <div class="chat-input">
+                <div class="input-wrapper">
+                    <textarea 
+                        id="messageInput" 
+                        placeholder="Type your question here... (Press Enter to send)"
+                        rows="1"
+                        maxlength="500"
+                    ></textarea>
+                    <button class="send-btn" onclick="sendMessage()" id="sendBtn">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+                <div class="input-footer">
+                    <div class="character-count">
+                        <span id="charCount">0</span>/500
+                    </div>
+                    <div class="privacy-note">
+                        <i class="fas fa-lock"></i> Your conversations are private and secure
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+        <div class="loading-spinner">
+            <div class="spinner"></div>
+            <p>Thinking...</p>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+        <button class="quick-action" onclick="sendQuickMessage('What is puberty?')">
+            <i class="fas fa-seedling"></i>
+            Puberty
+        </button>
+        <button class="quick-action" onclick="sendQuickMessage('How to talk to parents about relationships?')">
+            <i class="fas fa-comments"></i>
+            Family Talk
+        </button>
+        <button class="quick-action" onclick="sendQuickMessage('What is consent?')">
+            <i class="fas fa-handshake"></i>
+            Consent
+        </button>
+        <button class="quick-action" onclick="sendQuickMessage('How to stay safe?')">
+            <i class="fas fa-shield-alt"></i>
+            Safety
+        </button>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

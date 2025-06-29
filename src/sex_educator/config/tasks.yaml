@@ -1,0 +1,91 @@
+# research_task:
+#   description: >
+#     Conduct a thorough research about {topic}
+#     Make sure you find any interesting and relevant information given
+#     the current year is 2024.
+#   expected_output: >
+#     A list with 10 bullet points of the most relevant information about {topic}
+#   agent: researcher
+
+# reporting_task:
+#   description: >
+#     Review the context you got and expand each topic into a full section for a report.
+#     Make sure the report is detailed and contains any and all relevant information.
+#   expected_output: >
+#     A fully fledge reports with the mains topics, each with a full section of information.
+#     Formatted as markdown without '```'
+#   agent: reporting_analyst
+research_task:
+  description: >
+    Conduct a thorough research about {topic}
+    Make sure you find any interesting and relevant information given
+    the current year is 2024.
+  expected_output: >
+    A list with 10 bullet points of the most relevant information about {topic}
+  agent: researcher
+
+reporting_task:
+  description: >
+    Review the context you got and expand each topic into a full section for a report.
+    Make sure the report is detailed and contains any and all relevant information.
+  expected_output: >
+    A fully fledge reports with the mains topics, each with a full section of information.
+    Formatted as markdown without '```
+  agent: reporting_analyst
+
+curriculum_curation_task:
+  description: >
+    Curate and validate sex education content aligned with comprehensive sexuality education standards and Indian cultural contexts.
+    Ensure content is accurate, age-appropriate, and culturally sensitive.
+  expected_output: >
+    Validated and modular sex education content ready for localization and deployment.
+  agent: curriculum_curator
+
+localization_task:
+  description: >
+    Localize curated content and chatbot responses for diverse Indian languages, regions, and cultural norms.
+    Flag any content that may be taboo or require special handling.
+  expected_output: >
+    Localized, culturally appropriate content and responses.
+  agent: cultural_adapter
+
+legal_review_task:
+  description: >
+    Review localized content and chatbot interactions to ensure compliance with Indian laws and data privacy regulations.
+    Flag and block any content that may violate regulations.
+  expected_output: >
+    Legally compliant content and compliance reports.
+  agent: legal_compliance
+
+user_query_handling_task:
+  description: >
+    Manage user interactions with empathy and cultural sensitivity.
+    Provide accurate and supportive responses.
+    Escalate distress, misinformation, or legal/medical risk cases to the Escalation Agent.
+  expected_output: >
+    Empathetic, accurate, and culturally sensitive chatbot responses.
+  agent: conversation_handler
+
+escalation_handling_task:
+  description: >
+    Detect distress, misinformation, and legal risks in conversations.
+    Escalate cases to human experts or helplines as needed.
+  expected_output: >
+    Timely escalations and incident reports ensuring user safety.
+  agent: escalation_agent
+
+outreach_and_accessibility_task:
+  description: >
+    Drive user engagement, accessibility, and feedback collection.
+    Design campaigns and chatbot features to maximize reach and trust.
+  expected_output: >
+    Increased user engagement, accessibility features, and collected user feedback.
+  agent: outreach_engagement
+
+feedback_analysis_task:
+  description: >
+    Aggregate and analyze user feedback and behavioral data.
+    Provide actionable insights for continuous chatbot improvement.
+  expected_output: >
+    Data-driven insights and recommendations for iterative updates.
+  agent: feedback_analyzer
