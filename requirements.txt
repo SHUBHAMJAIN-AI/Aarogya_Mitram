@@ -1,8 +1,11 @@
 # Core Dependencies for Sex Education Chatbot
 # =============================================
 
-# CrewAI framework with tools
-crewai[tools]>=0.83.0,<1.0.0
+# Install the package itself
+-e .
+
+# CrewAI framework - using stable version without tools extra
+crewai==0.130.0
 
 # Web framework
 flask>=2.3.0

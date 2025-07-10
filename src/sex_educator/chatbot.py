@@ -9,7 +9,7 @@ import json
 from typing import Dict, List, Optional, Tuple
 from datetime import datetime
 from crewai import Agent, Task, Crew
-from sex_educator.crew import SexEducator
+from crew import SexEducator
 
 
 class ConversationMemory:
