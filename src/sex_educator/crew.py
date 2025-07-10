@@ -5,7 +5,8 @@ from crewai.project import CrewBase, agent, crew, task, before_kickoff, after_ki
 # from sex_educator.tools.custom_tool import MyCustomTool
 
 # Check our tools documentations for more information on how to use them
-from crewai_tools import SerperDevTool
+# from crewai_tools import SerperDevTool
+from tools.SerperDevTool import SerperDevTool
 
 @CrewBase
 class SexEducator():

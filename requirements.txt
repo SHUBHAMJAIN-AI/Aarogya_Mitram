@@ -4,8 +4,11 @@
 # Install the package itself
 -e .
 
-# CrewAI framework - using stable version without tools extra
+# CrewAI framework - using stable version without tools
 crewai==0.130.0
+
+# Add required dependencies manually
+requests>=2.28.0
 
 # Web framework
 flask>=2.3.0
