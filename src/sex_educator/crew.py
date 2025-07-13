@@ -1,5 +1,7 @@
 from crewai import Agent, Crew, Process, Task
 from crewai.project import CrewBase, agent, crew, task, before_kickoff, after_kickoff
+import os
+import logging
 
 # Uncomment the following line to use an example of a custom tool
 # from sex_educator.tools.custom_tool import MyCustomTool
@@ -7,6 +9,11 @@ from crewai.project import CrewBase, agent, crew, task, before_kickoff, after_ki
 # Check our tools documentations for more information on how to use them
 # from crewai_tools import SerperDevTool
 from tools.SerperDevTool import SerperDevTool
+from llm_utils import get_resilient_llm
+
+# Configure logging for better error tracking
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 @CrewBase
 class SexEducator():

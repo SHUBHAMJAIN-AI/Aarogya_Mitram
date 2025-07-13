@@ -59,11 +59,15 @@ legal_review_task:
 
 user_query_handling_task:
   description: >
-    Manage user interactions with empathy and cultural sensitivity.
-    Provide accurate and supportive responses.
-    Escalate distress, misinformation, or legal/medical risk cases to the Escalation Agent.
+    Provide a direct, factual answer without any greetings, casual phrases, or conversational elements. Answer the question directly in 2-3 sentences maximum. Be professional and informative. Do not use phrases like "Hey there", "That's a great question", or similar conversational fillers. Start directly with the factual information.
   expected_output: >
-    Empathetic, accurate, and culturally sensitive chatbot responses.
+    A direct, factual answer with no conversational elements:
+    - Start immediately with factual information (no greetings)
+    - Maximum 2-3 sentences
+    - Professional, educational tone
+    - Age-appropriate and culturally sensitive
+    - No conversational fillers or casual phrases
+    Example: "Puberty typically begins between ages 8-13 for girls and 9-14 for boys. It's a natural process where your body develops physically and hormonally to reach sexual maturity. Everyone's timeline is different and that's completely normal."
   agent: conversation_handler
 
 escalation_handling_task:

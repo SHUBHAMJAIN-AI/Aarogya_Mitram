@@ -54,6 +54,7 @@ def chat_api():
             return jsonify({'error': 'No message provided'}), 400
         
         user_message = data['message'].strip()
+        mode = data.get('mode', None)  # Get mode from request
         
         if not user_message:
             return jsonify({'error': 'Empty message'}), 400
@@ -61,11 +62,15 @@ def chat_api():
         # Get chatbot instance
         bot = get_chatbot()
         
-        # Process the message
-        response = bot.process_user_input(user_message)
+        # Process the message with mode
+        result = bot.process_user_input(user_message, mode)
         
         return jsonify({
-            'response': response,
+            'response': result['response'],
+            'suggestions': result['suggestions'],
+            'intent': result['intent'],
+            'current_mode': result.get('current_mode', 'normal'),
+            'mode_info': result.get('mode_info', {}),
             'status': 'success'
         })
         
@@ -100,6 +105,7 @@ def reset_conversation():
         bot.memory.messages = []
         bot.memory.user_profile = {}
         bot.memory.sensitive_topics = []
+        bot.memory.explanation_mode = 'normal'  # Reset to normal mode
         
         return jsonify({
             'status': 'success',
@@ -107,6 +113,56 @@ def reset_conversation():
         })
     except Exception as e:
         logger.error(f"Reset error: {e}")
+        return jsonify({
+            'status': 'error',
+            'error': str(e)
+        }), 500
+
+@app.route('/api/modes')
+def get_modes():
+    """Get available explanation modes"""
+    try:
+        bot = get_chatbot()
+        return jsonify({
+            'modes': bot.memory.modes,
+            'current_mode': bot.memory.get_current_mode(),
+            'status': 'success'
+        })
+    except Exception as e:
+        logger.error(f"Get modes error: {e}")
+        return jsonify({
+            'status': 'error',
+            'error': str(e)
+        }), 500
+
+@app.route('/api/mode', methods=['POST'])
+def set_mode():
+    """Set explanation mode"""
+    try:
+        data = request.get_json()
+        
+        if not data or 'mode' not in data:
+            return jsonify({'error': 'No mode provided'}), 400
+        
+        mode = data['mode']
+        bot = get_chatbot()
+        
+        # Set the mode
+        bot.memory.set_explanation_mode(mode)
+        
+        return jsonify({
+            'status': 'success',
+            'current_mode': bot.memory.get_current_mode(),
+            'mode_info': bot.memory.get_mode_info()
+        })
+        
+    except ValueError as e:
+        return jsonify({
+            'status': 'error',
+            'error': str(e)
+        }), 400
+    except Exception as e:
+        logger.error(f"Set mode error: {e}")
         return jsonify({
             'status': 'error',
             'error': str(e)

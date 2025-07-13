@@ -5,13 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Aarogya Mitram - Sex Education Chatbot</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
-    <div class="container">
-        <!-- Header -->
-        <header class="chat-header">
+    <div class="main-layout">
+        <!-- Chat Container -->
+        <div class="chat-container">
+            <!-- Header -->
+            <header class="chat-header">
             <div class="header-content">
                 <div class="bot-avatar">
                     <i class="fas fa-heart"></i>
@@ -25,6 +27,15 @@
                     </div>
                 </div>
                 <div class="header-actions">
+                    <button class="history-btn" onclick="toggleHistory()" title="Conversation History">
+                        <i class="fas fa-history"></i>
+                    </button>
+                    <!-- Mode Selection in Header -->
+                    <div class="header-mode-selection">
+                        <select id="modeSelector" class="header-mode-selector">
+                            <!-- Options will be populated by JavaScript -->
+                        </select>
+                    </div>
                     <button class="reset-btn" onclick="resetConversation()" title="Start New Conversation">
                         <i class="fas fa-refresh"></i>
                     </button>
@@ -34,6 +45,25 @@
                 </div>
             </div>
         </header>
+
+        <!-- Conversation History Panel -->
+        <div class="history-panel" id="historyPanel">
+            <div class="history-content">
+                <h3><i class="fas fa-history"></i> Conversation History</h3>
+                <div class="history-search">
+                    <input type="text" id="historySearch" placeholder="Search conversations..." class="history-search-input">
+                    <i class="fas fa-search"></i>
+                </div>
+                <div class="history-list" id="historyList">
+                    <!-- Conversation threads will be populated here -->
+                </div>
+                <div class="history-actions">
+                    <button class="export-history-btn" onclick="exportHistory()">
+                        <i class="fas fa-download"></i> Export History
+                    </button>
+                </div>
+            </div>
+        </div>
 
         <!-- Info Panel -->
         <div class="info-panel" id="infoPanel">
@@ -69,8 +99,27 @@
                     <div class="message-content">
                         <div class="message-bubble">
                             <p>🌟 Namaste! I'm Aarogya Mitram, your trusted companion for health education.</p>
-                            <p>I'm here to provide accurate, age-appropriate, and culturally sensitive information about relationships, health, and well-being.</p>
-                            <p>Feel free to ask me anything - your privacy is completely protected. 🌸</p>
+                            <p>I provide evidence-based information with <strong>citations from trusted sources</strong> like WHO, medical journals, and health authorities.</p>
+                            <p>Try asking: "What is puberty?" or "How do I know if I'm ready for a relationship?"</p>
+                            
+                            <!-- Example of how citations will look -->
+                            <div class="example-citation">
+                                <p><em>Example response with citations:</em></p>
+                                <p>"Puberty typically begins between ages 8-13 for girls and 9-14 for boys<sup class="citation-ref">[1]</sup>. Physical changes include growth spurts and hormonal development<sup class="citation-ref">[2]</sup>."</p>
+                                <div class="citations-section">
+                                    <h4><i class="fas fa-link"></i> Sources</h4>
+                                    <div class="citations-list">
+                                        <div class="citation-item">
+                                            <span class="citation-number">[1]</span>
+                                            <span class="citation-source">World Health Organization - Adolescent Health</span>
+                                        </div>
+                                        <div class="citation-item">
+                                            <span class="citation-number">[2]</span>
+                                            <span class="citation-source">American Academy of Pediatrics</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <div class="message-time">Just now</div>
                     </div>
@@ -94,13 +143,14 @@
             </div>
         </div>
 
+        
         <!-- Chat Input -->
         <div class="chat-input-container">
             <div class="chat-input">
                 <div class="input-wrapper">
                     <textarea 
                         id="messageInput" 
-                        placeholder="Type your question here... (Press Enter to send)"
+                        placeholder="Ask about puberty, relationships, consent, or health..."
                         rows="1"
                         maxlength="500"
                     ></textarea>
@@ -117,7 +167,104 @@
                     </div>
                 </div>
             </div>
+            </div>
         </div>
+
+        <!-- Suggestions Sidebar -->
+        <div class="suggestions-sidebar" id="suggestionsSidebar">
+            <div class="sidebar-header">
+                <h3><i class="fas fa-compass"></i> Related Questions</h3>
+                <p>Explore similar topics and learn more</p>
+            </div>
+            <div class="suggestions-list" id="suggestionsList">
+                <!-- Static starter questions -->
+                <div class="starter-questions">
+                    <div class="question-item">
+                        <button class="question-btn" onclick="sendQuickMessage('Tell me about puberty changes')">
+                            <i class="fas fa-seedling"></i>
+                            <div class="question-content">
+                                <div class="question-text">Tell me about puberty changes</div>
+                                <div class="question-preview">Physical and emotional changes during adolescence... <span class="expand-hint">Ask to learn more</span></div>
+                            </div>
+                        </button>
+                    </div>
+                    
+                    <div class="question-item">
+                        <button class="question-btn" onclick="sendQuickMessage('How do I know if I\'m ready for a relationship?')">
+                            <i class="fas fa-heart"></i>
+                            <div class="question-content">
+                                <div class="question-text">How do I know if I'm ready for a relationship?</div>
+                                <div class="question-preview">Signs of emotional readiness and healthy boundaries... <span class="expand-hint">Ask to learn more</span></div>
+                            </div>
+                        </button>
+                    </div>
+                    
+                    <div class="question-item">
+                        <button class="question-btn" onclick="sendQuickMessage('What does consent really mean?')">
+                            <i class="fas fa-handshake"></i>
+                            <div class="question-content">
+                                <div class="question-text">What does consent really mean?</div>
+                                <div class="question-preview">Understanding clear communication and boundaries... <span class="expand-hint">Ask to learn more</span></div>
+                            </div>
+                        </button>
+                    </div>
+                    
+                    <div class="question-item">
+                        <button class="question-btn" onclick="sendQuickMessage('How to talk to parents about relationships?')">
+                            <i class="fas fa-comments"></i>
+                            <div class="question-content">
+                                <div class="question-text">How to talk to parents about relationships?</div>
+                                <div class="question-preview">Tips for having difficult conversations with family... <span class="expand-hint">Ask to learn more</span></div>
+                            </div>
+                        </button>
+                    </div>
+                    
+                    <div class="question-item">
+                        <button class="question-btn" onclick="sendQuickMessage('What are healthy relationship signs?')">
+                            <i class="fas fa-check-circle"></i>
+                            <div class="question-content">
+                                <div class="question-text">What are healthy relationship signs?</div>
+                                <div class="question-preview">Key indicators of respectful partnerships... <span class="expand-hint">Ask to learn more</span></div>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Related Questions Section (populated dynamically) -->
+            <div class="related-section" id="relatedSection" style="display: none;">
+                <div class="section-header">
+                    <h4><i class="fas fa-link"></i> Related to your question</h4>
+                </div>
+                <div class="related-questions" id="relatedQuestions">
+                    <!-- Dynamic related questions will appear here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Quick Actions -->
+    <div class="floating-actions">
+        <button class="floating-btn puberty-btn" onclick="sendQuickMessage('Tell me about puberty changes')" title="Learn about puberty">
+            <i class="fas fa-seedling"></i>
+            <span>Puberty</span>
+        </button>
+        <button class="floating-btn family-btn" onclick="sendQuickMessage('How to talk to parents about relationships?')" title="Family conversations">
+            <i class="fas fa-home"></i>
+            <span>Family Talk</span>
+        </button>
+        <button class="floating-btn consent-btn" onclick="sendQuickMessage('What does consent really mean?')" title="Understanding consent">
+            <i class="fas fa-handshake"></i>
+            <span>Consent</span>
+        </button>
+        <button class="floating-btn safety-btn" onclick="sendQuickMessage('How to stay safe in relationships?')" title="Relationship safety">
+            <i class="fas fa-shield-alt"></i>
+            <span>Safety</span>
+        </button>
+        <button class="floating-btn health-btn" onclick="sendQuickMessage('What are signs of a healthy relationship?')" title="Healthy relationships">
+            <i class="fas fa-heart"></i>
+            <span>Healthy</span>
+        </button>
     </div>
 
     <!-- Loading Overlay -->
@@ -128,26 +275,22 @@
         </div>
     </div>
 
-    <!-- Quick Actions -->
-    <div class="quick-actions">
-        <button class="quick-action" onclick="sendQuickMessage('What is puberty?')">
-            <i class="fas fa-seedling"></i>
-            Puberty
-        </button>
-        <button class="quick-action" onclick="sendQuickMessage('How to talk to parents about relationships?')">
-            <i class="fas fa-comments"></i>
-            Family Talk
-        </button>
-        <button class="quick-action" onclick="sendQuickMessage('What is consent?')">
-            <i class="fas fa-handshake"></i>
-            Consent
-        </button>
-        <button class="quick-action" onclick="sendQuickMessage('How to stay safe?')">
-            <i class="fas fa-shield-alt"></i>
-            Safety
-        </button>
-    </div>
+    <!-- Removed old quick actions - now using floating buttons -->
 
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    <script>
+        // Global functions for history management
+        function toggleHistory() {
+            if (chatInterface) {
+                chatInterface.toggleHistory();
+            }
+        }
+        
+        function exportHistory() {
+            if (chatInterface) {
+                chatInterface.exportHistory();
+            }
+        }
+    </script>
 </body>
 </html>
