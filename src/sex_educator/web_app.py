@@ -11,10 +11,7 @@ import json
 import traceback
 import logging
 
-# Add the current directory to Python path
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-
-from chatbot import SexEducatorChatbot
+from .chatbot import SexEducatorChatbot
 
 # Initialize Flask app
 app = Flask(__name__, template_folder='templates', static_folder='static')

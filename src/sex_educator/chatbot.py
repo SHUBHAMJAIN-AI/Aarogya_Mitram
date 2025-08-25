@@ -11,7 +11,7 @@ import logging
 from typing import Dict, List, Optional, Tuple
 from datetime import datetime
 from crewai import Agent, Task, Crew
-from crew import SexEducator
+from .crew import SexEducator
 
 
 class ConversationMemory:

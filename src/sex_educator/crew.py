@@ -8,8 +8,8 @@ import logging
 
 # Check our tools documentations for more information on how to use them
 # from crewai_tools import SerperDevTool
-from tools.SerperDevTool import SerperDevTool
-from llm_utils import get_resilient_llm
+from .tools.SerperDevTool import SerperDevTool
+from .llm_utils import get_resilient_llm
 
 # Configure logging for better error tracking
 logging.basicConfig(level=logging.INFO)

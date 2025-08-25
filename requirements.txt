@@ -15,8 +15,8 @@ google-generativeai>=0.3.0
 tenacity>=8.0.0
 
 # Web framework
-flask>=2.3.0
-flask-cors>=4.0.0
+flask>=3.1.2
+flask-cors>=6.0.1
 
 # Testing (optional but recommended)
 pytest>=7.0.0

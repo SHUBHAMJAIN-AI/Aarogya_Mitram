@@ -12,7 +12,7 @@ class ChatInterface {
         this.historyPanel = document.getElementById('historyPanel');
         this.historyList = document.getElementById('historyList');
         this.historySearch = document.getElementById('historySearch');
-        
+
         // Perplexity-style placeholder suggestions
         this.placeholderSuggestions = [
             'Ask about puberty, relationships, consent, or health...',
@@ -24,22 +24,22 @@ class ChatInterface {
             'How to set boundaries in relationships?'
         ];
         this.currentPlaceholderIndex = 0;
-        
+
         this.isWaitingForResponse = false;
         this.messageHistory = [];
-        
+
         // Retry configuration
         this.maxRetries = 3;
         this.baseDelay = 2000; // milliseconds
-        
+
         // Mode management
         this.currentMode = 'normal';
         this.availableModes = {};
-        
+
         // Conversation history management
         this.conversationHistory = this.loadConversationHistory();
         this.currentConversationId = this.generateConversationId();
-        
+
         this.initializeEventListeners();
         this.autoResizeTextarea();
         this.checkHealth();
@@ -47,11 +47,11 @@ class ChatInterface {
         this.initializeHistorySearch();
         this.startPlaceholderRotation();
     }
-    
+
     initializeEventListeners() {
         // Send message on button click
         this.sendBtn.addEventListener('click', () => this.sendMessage());
-        
+
         // Send message on Enter key (Shift+Enter for new line)
         this.messageInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
@@ -59,21 +59,21 @@ class ChatInterface {
                 this.sendMessage();
             }
         });
-        
+
         // Character count update
         this.messageInput.addEventListener('input', () => {
             this.updateCharCount();
             this.autoResizeTextarea();
         });
-        
+
         // Disable send button when no text
         this.messageInput.addEventListener('input', () => {
             this.sendBtn.disabled = !this.messageInput.value.trim();
         });
-        
+
         // Initial button state
         this.sendBtn.disabled = true;
-        
+
         // Mode selector event listener
         const modeSelector = document.getElementById('modeSelector');
         if (modeSelector) {
@@ -82,7 +82,7 @@ class ChatInterface {
             });
         }
     }
-    
+
     initializeHistorySearch() {
         if (this.historySearch) {
             this.historySearch.addEventListener('input', (e) => {
@@ -91,11 +91,11 @@ class ChatInterface {
         }
         this.renderHistoryList();
     }
-    
+
     updateCharCount() {
         const count = this.messageInput.value.length;
         this.charCount.textContent = count;
-        
+
         if (count > 450) {
             this.charCount.style.color = '#e74c3c';
         } else if (count > 400) {
@@ -104,17 +104,17 @@ class ChatInterface {
             this.charCount.style.color = '#7f8c8d';
         }
     }
-    
+
     autoResizeTextarea() {
         this.messageInput.style.height = 'auto';
         this.messageInput.style.height = Math.min(this.messageInput.scrollHeight, 120) + 'px';
     }
-    
+
     async checkHealth() {
         try {
             const response = await fetch('/api/health');
             const data = await response.json();
-            
+
             if (data.status === 'healthy') {
                 this.updateStatus('Ready to help', true);
             } else {
@@ -125,41 +125,41 @@ class ChatInterface {
             this.updateStatus('Connection issues', false);
         }
     }
-    
+
     updateStatus(text, isOnline) {
         const statusText = document.querySelector('.status-text');
         const statusDot = document.querySelector('.status-dot');
-        
+
         if (statusText) statusText.textContent = text;
         if (statusDot) {
             statusDot.className = `status-dot ${isOnline ? 'online' : 'offline'}`;
         }
     }
-    
+
     async sendMessage() {
         const message = this.messageInput.value.trim();
-        
+
         if (!message || this.isWaitingForResponse) {
             return;
         }
-        
+
         // Add user message to chat
         this.addMessage(message, 'user');
         this.messageHistory.push({ role: 'user', content: message });
-        
+
         // Save to conversation history
         this.saveToConversationHistory(message, 'user');
-        
+
         // Clear input
         this.messageInput.value = '';
         this.updateCharCount();
         this.autoResizeTextarea();
-        
+
         // Show research progress indicators
         this.showResearchProgress();
         this.isWaitingForResponse = true;
         this.sendBtn.disabled = true;
-        
+
         try {
             // Send to backend with retry logic
             const data = await this.fetchWithRetry('/api/chat', {
@@ -167,73 +167,84 @@ class ChatInterface {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ 
+                body: JSON.stringify({
                     message: message,
                     mode: this.currentMode
                 })
             });
-            
+
             // Hide research progress and typing indicator
             this.hideResearchProgress();
             this.hideTypingIndicator();
-            
+
             // Add bot response
             this.addMessage(data.response, 'bot');
             this.messageHistory.push({ role: 'assistant', content: data.response });
-            
+
             // Save to conversation history
             this.saveToConversationHistory(data.response, 'bot');
-            
+
             // Update current mode info
             if (data.current_mode) {
                 this.currentMode = data.current_mode;
                 this.updateModeDisplay();
             }
-            
+
             // Update suggestions based on response
             this.updateSuggestions(data.suggestions, data.intent);
-            
+
         } catch (error) {
             console.error('Error sending message:', error);
             this.hideResearchProgress();
             this.hideTypingIndicator();
-            
+
             let errorMessage = 'Sorry, I encountered an error. Please try again.';
-            
+
             if (error.message.includes('Failed to fetch')) {
                 errorMessage = 'Connection lost. Please check your internet connection and try again.';
                 this.updateStatus('Connection lost', false);
             }
-            
+
             this.addMessage(errorMessage, 'bot', true);
         } finally {
             this.isWaitingForResponse = false;
             this.sendBtn.disabled = !this.messageInput.value.trim();
         }
     }
-    
+
     addMessage(content, sender, isError = false) {
         const messageDiv = document.createElement('div');
         messageDiv.className = `message ${sender}-message`;
-        
+
+        const avatarDiv = document.createElement('div');
+        avatarDiv.className = 'message-avatar';
+        const avatarIcon = document.createElement('i');
+        avatarIcon.className = `fas ${sender === 'user' ? 'fa-user' : 'fa-heart'}`;
+        avatarDiv.appendChild(avatarIcon);
+
+        const contentDiv = document.createElement('div');
+        contentDiv.className = 'message-content';
+
+        const bubbleDiv = document.createElement('div');
+        bubbleDiv.className = `message-bubble ${isError ? 'error-message' : ''}`;
+
+        const formattedContent = this.formatMessage(content);
+        bubbleDiv.appendChild(formattedContent);
+
+        const timeDiv = document.createElement('div');
+        timeDiv.className = 'message-time';
         const now = new Date();
-        const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-        
-        messageDiv.innerHTML = `
-            <div class="message-avatar">
-                ${sender === 'user' ? '<i class="fas fa-user"></i>' : '<i class="fas fa-heart"></i>'}
-            </div>
-            <div class="message-content">
-                <div class="message-bubble ${isError ? 'error-message' : ''}">
-                    ${this.formatMessage(content)}
-                </div>
-                <div class="message-time">${timeString}</div>
-            </div>
-        `;
-        
+        timeDiv.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        contentDiv.appendChild(bubbleDiv);
+        contentDiv.appendChild(timeDiv);
+
+        messageDiv.appendChild(avatarDiv);
+        messageDiv.appendChild(contentDiv);
+
         this.chatMessages.appendChild(messageDiv);
         this.scrollToBottom();
-        
+
         // Add animation
         requestAnimationFrame(() => {
             messageDiv.style.opacity = '0';
@@ -245,178 +256,212 @@ class ChatInterface {
             });
         });
     }
-    
+
     formatMessage(content) {
-        // Convert line breaks to HTML
-        let formatted = content.replace(/\n/g, '<br>');
-        
-        // Convert **bold** to <strong>
-        formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-        
-        // Convert *italic* to <em>
-        formatted = formatted.replace(/\*(.*?)\*/g, '<em>$1</em>');
-        
-        // Convert numbered lists
-        formatted = formatted.replace(/^\d+\.\s/gm, '• ');
-        
-        // Convert bullet points
-        formatted = formatted.replace(/^\*\s/gm, '• ');
-        
-        // Extract and format citations
-        formatted = this.formatCitations(formatted);
-        
-        // Wrap in paragraphs if multiple lines
-        if (formatted.includes('<br>')) {
-            const paragraphs = formatted.split('<br><br>');
-            formatted = paragraphs.map(p => `<p>${p.replace(/<br>/g, '<br>')}</p>`).join('');
-        } else {
-            formatted = `<p>${formatted}</p>`;
-        }
-        
-        return formatted;
-    }
-    
-    formatCitations(content) {
-        // Format citations like [Source: WHO] into clickable elements
+        const fragment = document.createDocumentFragment();
         const citationRegex = /\[Source:\s*([^\]]+)\]/g;
-        let citationCount = 0;
         const citations = [];
-        
-        // Extract citations and replace with footnote numbers
-        const contentWithFootnotes = content.replace(citationRegex, (match, source) => {
-            citationCount++;
+
+        // Extract citations first
+        const contentWithoutCitations = content.replace(citationRegex, (match, source) => {
             citations.push(source.trim());
-            return `<sup class="citation-ref" data-citation="${citationCount}">[${citationCount}]</sup>`;
+            return `[CITATION-${citations.length}]`;
         });
-        
-        // Add citations section if citations exist
+
+        const lines = contentWithoutCitations.split('\n');
+
+        lines.forEach(line => {
+            const p = document.createElement('p');
+            const parts = line.split(/(\*\*.*?\*\*|\*.*?\*|\[CITATION-\d+\])/g);
+
+            parts.forEach(part => {
+                if (part.startsWith('**') && part.endsWith('**')) {
+                    const strong = document.createElement('strong');
+                    strong.textContent = part.slice(2, -2);
+                    p.appendChild(strong);
+                } else if (part.startsWith('*') && part.endsWith('*')) {
+                    const em = document.createElement('em');
+                    em.textContent = part.slice(1, -1);
+                    p.appendChild(em);
+                } else if (/^\[CITATION-\d+\]$/.test(part)) {
+                    const citationIndex = parseInt(part.match(/\d+/)[0], 10) - 1;
+                    const sup = document.createElement('sup');
+                    sup.className = 'citation-ref';
+                    sup.dataset.citation = citationIndex + 1;
+                    sup.textContent = `[${citationIndex + 1}]`;
+                    p.appendChild(sup);
+                } else if (part) {
+                    p.appendChild(document.createTextNode(part));
+                }
+            });
+            fragment.appendChild(p);
+        });
+
         if (citations.length > 0) {
-            const citationsHtml = citations.map((citation, index) => 
-                `<div class="citation-item">
-                    <span class="citation-number">[${index + 1}]</span>
-                    <span class="citation-source">${citation}</span>
-                </div>`
-            ).join('');
-            
-            return contentWithFootnotes + `
-                <div class="citations-section">
-                    <h4><i class="fas fa-link"></i> Sources</h4>
-                    <div class="citations-list">
-                        ${citationsHtml}
-                    </div>
-                </div>`;
+            const citationsSection = this.createCitationsSection(citations);
+            fragment.appendChild(citationsSection);
         }
-        
-        return contentWithFootnotes;
+
+        return fragment;
     }
-    
+
+    createCitationsSection(citations) {
+        const sectionDiv = document.createElement('div');
+        sectionDiv.className = 'citations-section';
+
+        const h4 = document.createElement('h4');
+        const icon = document.createElement('i');
+        icon.className = 'fas fa-link';
+        h4.appendChild(icon);
+        h4.appendChild(document.createTextNode(' Sources'));
+        sectionDiv.appendChild(h4);
+
+        const listDiv = document.createElement('div');
+        listDiv.className = 'citations-list';
+
+        citations.forEach((citation, index) => {
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'citation-item';
+
+            const numberSpan = document.createElement('span');
+            numberSpan.className = 'citation-number';
+            numberSpan.textContent = `[${index + 1}]`;
+            itemDiv.appendChild(numberSpan);
+
+            const sourceSpan = document.createElement('span');
+            sourceSpan.className = 'citation-source';
+            sourceSpan.textContent = citation;
+            itemDiv.appendChild(sourceSpan);
+
+            listDiv.appendChild(itemDiv);
+        });
+
+        sectionDiv.appendChild(listDiv);
+        return sectionDiv;
+    }
+
     showTypingIndicator() {
         this.typingIndicator.style.display = 'block';
         this.scrollToBottom();
     }
-    
+
     showResearchProgress() {
         // Hide regular typing indicator
         this.hideTypingIndicator();
-        
+
         // Create research progress indicator
         const progressDiv = document.createElement('div');
         progressDiv.className = 'research-progress';
         progressDiv.id = 'researchProgress';
-        
-        progressDiv.innerHTML = `
-            <div class="message bot-message">
-                <div class="message-avatar">
-                    <i class="fas fa-heart"></i>
-                </div>
-                <div class="message-content">
-                    <div class="research-status">
-                        <div class="progress-step active" data-step="1">
-                            <i class="fas fa-search spinning"></i>
-                            <span>Researching your question...</span>
-                        </div>
-                        <div class="progress-step" data-step="2">
-                            <i class="fas fa-book-open"></i>
-                            <span>Analyzing educational sources</span>
-                        </div>
-                        <div class="progress-step" data-step="3">
-                            <i class="fas fa-brain"></i>
-                            <span>Generating culturally sensitive response</span>
-                        </div>
-                        <div class="progress-step" data-step="4">
-                            <i class="fas fa-check-circle"></i>
-                            <span>Ready to help</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-        
+
+        const messageBotDiv = document.createElement('div');
+        messageBotDiv.className = 'message bot-message';
+
+        const avatarDiv = document.createElement('div');
+        avatarDiv.className = 'message-avatar';
+        const avatarIcon = document.createElement('i');
+        avatarIcon.className = 'fas fa-heart';
+        avatarDiv.appendChild(avatarIcon);
+        messageBotDiv.appendChild(avatarDiv);
+
+        const messageContentDiv = document.createElement('div');
+        messageContentDiv.className = 'message-content';
+
+        const researchStatusDiv = document.createElement('div');
+        researchStatusDiv.className = 'research-status';
+
+        const steps = [
+            { icon: 'fas fa-search spinning', text: 'Researching your question...' },
+            { icon: 'fas fa-book-open', text: 'Analyzing educational sources' },
+            { icon: 'fas fa-brain', text: 'Generating culturally sensitive response' },
+            { icon: 'fas fa-check-circle', text: 'Ready to help' }
+        ];
+
+        steps.forEach((step, index) => {
+            const stepDiv = document.createElement('div');
+            stepDiv.className = `progress-step${index === 0 ? ' active' : ''}`;
+            stepDiv.dataset.step = index + 1;
+
+            const icon = document.createElement('i');
+            icon.className = step.icon;
+            stepDiv.appendChild(icon);
+
+            const span = document.createElement('span');
+            span.textContent = step.text;
+            stepDiv.appendChild(span);
+
+            researchStatusDiv.appendChild(stepDiv);
+        });
+
+        messageContentDiv.appendChild(researchStatusDiv);
+        messageBotDiv.appendChild(messageContentDiv);
+        progressDiv.appendChild(messageBotDiv);
+
         this.chatMessages.appendChild(progressDiv);
         this.scrollToBottom();
-        
+
         // Simulate progress steps
         this.simulateResearchProgress();
     }
-    
+
     simulateResearchProgress() {
         const steps = document.querySelectorAll('.progress-step');
         let currentStep = 0;
-        
+
         const progressInterval = setInterval(() => {
             if (currentStep < steps.length - 1) {
                 // Remove active from current step
                 steps[currentStep].classList.remove('active');
                 steps[currentStep].classList.add('completed');
-                
+
                 // Move to next step
                 currentStep++;
                 steps[currentStep].classList.add('active');
-                
+
                 this.scrollToBottom();
             } else {
                 clearInterval(progressInterval);
             }
         }, 800); // Change step every 800ms
-        
+
         // Store interval ID to clear it when response comes
         this.progressInterval = progressInterval;
     }
-    
+
     hideResearchProgress() {
         const progressDiv = document.getElementById('researchProgress');
         if (progressDiv) {
             progressDiv.remove();
         }
-        
+
         // Clear progress interval if running
         if (this.progressInterval) {
             clearInterval(this.progressInterval);
             this.progressInterval = null;
         }
     }
-    
+
     hideTypingIndicator() {
         this.typingIndicator.style.display = 'none';
     }
-    
+
     scrollToBottom() {
         setTimeout(() => {
             this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
         }, 100);
     }
-    
+
     async resetConversation() {
         if (this.isWaitingForResponse) {
             return;
         }
-        
+
         if (!confirm('Are you sure you want to start a new conversation? This will clear all messages.')) {
             return;
         }
-        
+
         this.showLoading();
-        
+
         try {
             const response = await fetch('/api/reset', {
                 method: 'POST',
@@ -424,7 +469,7 @@ class ChatInterface {
                     'Content-Type': 'application/json',
                 }
             });
-            
+
             if (response.ok) {
                 // Clear chat messages except welcome message
                 const welcomeMessage = this.chatMessages.querySelector('.welcome-message');
@@ -432,7 +477,7 @@ class ChatInterface {
                 if (welcomeMessage) {
                     this.chatMessages.appendChild(welcomeMessage);
                 }
-                
+
                 this.messageHistory = [];
                 this.currentConversationId = this.generateConversationId();
                 this.renderHistoryList();
@@ -445,57 +490,57 @@ class ChatInterface {
             this.hideLoading();
         }
     }
-    
+
     toggleInfo() {
         this.infoPanel.classList.toggle('show');
     }
-    
+
     sendQuickMessage(message) {
         this.messageInput.value = message;
         this.updateCharCount();
         this.sendBtn.disabled = false;
         this.sendMessage();
     }
-    
+
     showLoading() {
         this.loadingOverlay.style.display = 'flex';
     }
-    
+
     hideLoading() {
         this.loadingOverlay.style.display = 'none';
     }
-    
+
     async fetchWithRetry(url, options, attempt = 1) {
         try {
             const response = await fetch(url, options);
-            
+
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
-            
+
             const data = await response.json();
-            
+
             if (data.status === 'success') {
                 return data;
             } else {
                 throw new Error(data.error || 'Unknown error occurred');
             }
-            
+
         } catch (error) {
             const errorStr = error.message.toLowerCase();
-            
+
             // Check if this is a retryable error
             const isRetryable = this.isRetryableError(errorStr);
-            
+
             if (isRetryable && attempt < this.maxRetries) {
                 console.log(`Attempt ${attempt} failed, retrying... Error:`, error.message);
-                
+
                 // Calculate delay with exponential backoff
                 const delay = this.baseDelay * Math.pow(2, attempt - 1);
-                
+
                 // Wait before retry
                 await new Promise(resolve => setTimeout(resolve, delay));
-                
+
                 // Retry
                 return this.fetchWithRetry(url, options, attempt + 1);
             } else {
@@ -505,37 +550,37 @@ class ChatInterface {
             }
         }
     }
-    
+
     isRetryableError(errorStr) {
         const retryableIndicators = [
-            'overloaded', '503', 'unavailable', 'timeout', 
+            'overloaded', '503', 'unavailable', 'timeout',
             'connection', 'network', 'temporary', 'busy',
             'failed to fetch', 'network error'
         ];
         return retryableIndicators.some(indicator => errorStr.includes(indicator));
     }
-    
+
     updateSuggestions(suggestions, intent) {
         const relatedSection = document.getElementById('relatedSection');
         const relatedQuestions = document.getElementById('relatedQuestions');
-        
+
         if (!relatedSection || !relatedQuestions) {
             console.log('Related section elements not found');
             return;
         }
-        
+
         // Hide if no suggestions
         if (!suggestions || (Array.isArray(suggestions) && suggestions.length === 0)) {
             relatedSection.style.display = 'none';
             return;
         }
-        
+
         // Show the related section
         relatedSection.style.display = 'block';
-        
+
         // Clear previous related questions
         relatedQuestions.innerHTML = '';
-        
+
         // Handle both array and object formats
         if (Array.isArray(suggestions)) {
             this.renderSimpleRelated(suggestions, relatedQuestions);
@@ -543,34 +588,37 @@ class ChatInterface {
             this.renderCategorizedRelated(suggestions, relatedQuestions);
         }
     }
-    
+
     renderSimpleRelated(suggestions, container) {
         // Show up to 5 related questions
         suggestions.slice(0, 5).forEach((suggestion) => {
             const relatedItem = document.createElement('div');
             relatedItem.className = 'related-item';
-            
+
             const relatedBtn = document.createElement('button');
             relatedBtn.className = 'related-btn';
-            
+
             const icon = this.getSuggestionIcon(suggestion);
-            
-            relatedBtn.innerHTML = `
-                <i class="${icon}"></i>
-                <span>${suggestion}</span>
-            `;
-            
+
+            const iconEl = document.createElement('i');
+            iconEl.className = icon;
+            relatedBtn.appendChild(iconEl);
+
+            const spanEl = document.createElement('span');
+            spanEl.textContent = suggestion;
+            relatedBtn.appendChild(spanEl);
+
             // Click sends question to main chat
             relatedBtn.onclick = (e) => {
                 e.preventDefault();
                 this.sendQuickMessage(suggestion);
             };
-            
+
             relatedItem.appendChild(relatedBtn);
             container.appendChild(relatedItem);
         });
     }
-    
+
     renderCategorizedRelated(suggestionsObj, container) {
         // Flatten all suggestions from categories and show top 5
         const allSuggestions = [];
@@ -579,83 +627,85 @@ class ChatInterface {
                 allSuggestions.push(suggestion);
             });
         });
-        
+
         // Render as simple list
         this.renderSimpleRelated(allSuggestions.slice(0, 5), container);
     }
-    
+
     async createSuggestionWithPreview(suggestionBtn, question, icon, container) {
-        // Start by showing question with loading preview
-        suggestionBtn.innerHTML = `
-            <i class="${icon}"></i>
-            <div class="suggestion-content">
-                <div class="suggestion-question">${question}</div>
-                <div class="suggestion-preview">
-                    <span class="preview-loading">Loading...</span>
-                </div>
-            </div>
-        `;
-        
+        const iconEl = document.createElement('i');
+        iconEl.className = icon;
+        suggestionBtn.appendChild(iconEl);
+
+        const suggestionContent = document.createElement('div');
+        suggestionContent.className = 'suggestion-content';
+
+        const questionDiv = document.createElement('div');
+        questionDiv.className = 'suggestion-question';
+        questionDiv.textContent = question;
+        suggestionContent.appendChild(questionDiv);
+
+        const previewDiv = document.createElement('div');
+        previewDiv.className = 'suggestion-preview';
+        const loadingSpan = document.createElement('span');
+        loadingSpan.className = 'preview-loading';
+        loadingSpan.textContent = 'Loading...';
+        previewDiv.appendChild(loadingSpan);
+        suggestionContent.appendChild(previewDiv);
+        suggestionBtn.appendChild(suggestionContent);
+
         container.appendChild(suggestionBtn);
-        
+
         try {
-            // Get answer for preview with retry logic
             const data = await this.fetchWithRetry('/api/chat', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ 
+                body: JSON.stringify({
                     message: question,
                     mode: this.currentMode
                 })
             });
-            
+
             const fullAnswer = data.response;
             const previewText = this.createPreview(fullAnswer);
-            
-            // Update with preview - click sends to main chat
-            suggestionBtn.innerHTML = `
-                <i class="${icon}"></i>
-                <div class="suggestion-content">
-                    <div class="suggestion-question">${question}</div>
-                    <div class="suggestion-preview">
-                        <span class="preview-text">${previewText}</span>
-                        <span class="expand-dots">...</span>
-                    </div>
-                </div>
-            `;
-            
-            // Click sends question to main chat (like Perplexity)
+
+            previewDiv.innerHTML = ''; // Clear loading text
+            const textSpan = document.createElement('span');
+            textSpan.className = 'preview-text';
+            textSpan.textContent = previewText;
+            previewDiv.appendChild(textSpan);
+
+            const dotsSpan = document.createElement('span');
+            dotsSpan.className = 'expand-dots';
+            dotsSpan.textContent = '...';
+            previewDiv.appendChild(dotsSpan);
+
             suggestionBtn.onclick = (e) => {
                 e.preventDefault();
                 this.sendQuickMessage(question);
             };
-            
+
         } catch (error) {
             console.error('Error getting suggestion preview:', error);
-            suggestionBtn.innerHTML = `
-                <i class="${icon}"></i>
-                <div class="suggestion-content">
-                    <div class="suggestion-question">${question}</div>
-                    <div class="suggestion-preview">
-                        <span class="preview-error">Click to ask this question</span>
-                    </div>
-                </div>
-            `;
-            
-            // Even on error, allow clicking to send question
+            previewDiv.innerHTML = ''; // Clear loading text
+            const errorSpan = document.createElement('span');
+            errorSpan.className = 'preview-error';
+            errorSpan.textContent = 'Click to ask this question';
+            previewDiv.appendChild(errorSpan);
+
             suggestionBtn.onclick = (e) => {
                 e.preventDefault();
                 this.sendQuickMessage(question);
             };
         }
     }
-    
+
     createPreview(fullText) {
         // Split into sentences and take first 2
         const sentences = fullText.split(/[.!?]+/).filter(s => s.trim().length > 0);
-        
+
         if (sentences.length >= 2) {
             return sentences.slice(0, 2).join('. ').trim() + '.';
         } else if (sentences.length === 1) {
@@ -670,11 +720,11 @@ class ChatInterface {
             return fullText.length > 100 ? fullText.substring(0, 100).trim() : fullText;
         }
     }
-    
-    
+
+
     getSuggestionIcon(suggestion) {
         const text = suggestion.toLowerCase();
-        
+
         // Match specific keywords to icons
         if (text.includes('puberty') || text.includes('body') || text.includes('development')) {
             return 'fas fa-seedling';
@@ -694,101 +744,100 @@ class ChatInterface {
             return 'fas fa-arrow-right';
         }
     }
-    
+
     renderCategorizedSuggestions(suggestionsObj, intent, container) {
         let animationDelay = 0;
-        
+
         Object.entries(suggestionsObj).forEach(([category, suggestions]) => {
-            // Create category header
             const categoryHeader = document.createElement('div');
             categoryHeader.className = 'suggestion-category';
-            categoryHeader.innerHTML = `
-                <h4 class="category-title">
-                    <i class="${this.getCategoryIcon(category)}"></i>
-                    ${category}
-                </h4>
-            `;
-            
-            // Add category with animation
+
+            const title = document.createElement('h4');
+            title.className = 'category-title';
+
+            const icon = document.createElement('i');
+            icon.className = this.getCategoryIcon(category);
+            title.appendChild(icon);
+
+            title.appendChild(document.createTextNode(` ${category}`));
+            categoryHeader.appendChild(title);
+
             setTimeout(() => {
                 container.appendChild(categoryHeader);
                 categoryHeader.style.opacity = '0';
                 categoryHeader.style.transform = 'translateY(10px)';
-                
                 setTimeout(() => {
                     categoryHeader.style.transition = 'all 0.3s ease';
                     categoryHeader.style.opacity = '1';
                     categoryHeader.style.transform = 'translateY(0)';
                 }, 50);
             }, animationDelay);
-            
+
             animationDelay += 100;
-            
-            // Add suggestions for this category
+
             suggestions.slice(0, 3).forEach((suggestion, index) => {
                 const suggestionContainer = document.createElement('div');
                 suggestionContainer.className = 'suggestion-container';
-                
+
                 const suggestionBtn = document.createElement('button');
                 suggestionBtn.className = 'suggestion-btn';
-                
-                // Get appropriate icon based on suggestion content
-                const icon = this.getSuggestionIcon(suggestion, intent);
-                
-                // Create simple suggestion button without preview for categorized view
-                suggestionBtn.innerHTML = `
-                    <i class="${icon}"></i>
-                    <div class="suggestion-content">
-                        <div class="suggestion-question">${suggestion}</div>
-                    </div>
-                `;
-                
-                // Click sends question to main chat
+
+                const btnIcon = document.createElement('i');
+                btnIcon.className = this.getSuggestionIcon(suggestion, intent);
+                suggestionBtn.appendChild(btnIcon);
+
+                const suggestionContent = document.createElement('div');
+                suggestionContent.className = 'suggestion-content';
+
+                const questionDiv = document.createElement('div');
+                questionDiv.className = 'suggestion-question';
+                questionDiv.textContent = suggestion;
+                suggestionContent.appendChild(questionDiv);
+                suggestionBtn.appendChild(suggestionContent);
+
                 suggestionBtn.onclick = (e) => {
                     e.preventDefault();
                     this.sendQuickMessage(suggestion);
                 };
-                
+
                 suggestionContainer.appendChild(suggestionBtn);
-                
-                // Add with animation
+
                 setTimeout(() => {
                     container.appendChild(suggestionContainer);
                     suggestionContainer.style.opacity = '0';
                     suggestionContainer.style.transform = 'translateY(10px)';
-                    
                     setTimeout(() => {
                         suggestionContainer.style.transition = 'all 0.3s ease';
                         suggestionContainer.style.opacity = '1';
                         suggestionContainer.style.transform = 'translateY(0)';
                     }, 50);
                 }, animationDelay);
-                
+
                 animationDelay += 80;
             });
         });
     }
-    
+
     renderSimpleSuggestions(suggestions, intent, container) {
         // Legacy support for simple array format
         suggestions.forEach((suggestion, index) => {
             const suggestionContainer = document.createElement('div');
             suggestionContainer.className = 'suggestion-container';
-            
+
             const suggestionBtn = document.createElement('button');
             suggestionBtn.className = 'suggestion-btn';
-            
+
             const icon = this.getSuggestionIcon(suggestion, intent);
-            
+
             // Get answer immediately and show preview
             this.createSuggestionWithPreview(suggestionBtn, suggestion, icon, suggestionContainer);
-            
+
             // Add with slight delay for animation effect
             setTimeout(() => {
                 container.appendChild(suggestionContainer);
                 suggestionContainer.style.opacity = '0';
                 suggestionContainer.style.transform = 'translateY(10px)';
-                
+
                 // Animate in
                 setTimeout(() => {
                     suggestionContainer.style.transition = 'all 0.3s ease';
@@ -798,7 +847,7 @@ class ChatInterface {
             }, index * 100);
         });
     }
-    
+
     getCategoryIcon(category) {
         const categoryIcons = {
             'Continue Learning': 'fas fa-graduation-cap',
@@ -837,15 +886,15 @@ class ChatInterface {
             'Explore Topics': 'fas fa-compass',
             'Resources & Support': 'fas fa-life-ring'
         };
-        
+
         return categoryIcons[category] || 'fas fa-question-circle';
     }
-    
+
     // Conversation History Management
     generateConversationId() {
         return 'conv_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
     }
-    
+
     loadConversationHistory() {
         try {
             const stored = localStorage.getItem('sexed_conversation_history');
@@ -855,7 +904,7 @@ class ChatInterface {
             return {};
         }
     }
-    
+
     saveConversationHistory() {
         try {
             localStorage.setItem('sexed_conversation_history', JSON.stringify(this.conversationHistory));
@@ -863,10 +912,10 @@ class ChatInterface {
             console.error('Error saving conversation history:', error);
         }
     }
-    
+
     saveToConversationHistory(content, role) {
         const timestamp = new Date().toISOString();
-        
+
         if (!this.conversationHistory[this.currentConversationId]) {
             this.conversationHistory[this.currentConversationId] = {
                 id: this.currentConversationId,
@@ -876,19 +925,19 @@ class ChatInterface {
                 messages: []
             };
         }
-        
+
         this.conversationHistory[this.currentConversationId].messages.push({
             role,
             content,
             timestamp
         });
-        
+
         this.conversationHistory[this.currentConversationId].lastMessage = timestamp;
-        
+
         this.saveConversationHistory();
         this.renderHistoryList();
     }
-    
+
     generateConversationTitle(content, role) {
         if (role === 'user') {
             // Use first user message as title, truncated
@@ -896,53 +945,73 @@ class ChatInterface {
         }
         return 'New Conversation';
     }
-    
+
     renderHistoryList() {
         if (!this.historyList) return;
-        
+
         const conversations = Object.values(this.conversationHistory)
             .sort((a, b) => new Date(b.lastMessage) - new Date(a.lastMessage));
-        
+
         this.historyList.innerHTML = '';
-        
+
         if (conversations.length === 0) {
             this.historyList.innerHTML = '<div class="no-history">No conversations yet</div>';
             return;
         }
-        
+
         conversations.forEach(conv => {
             const convElement = document.createElement('div');
             convElement.className = 'history-item';
             if (conv.id === this.currentConversationId) {
                 convElement.classList.add('active');
             }
-            
+
             const lastMessageTime = new Date(conv.lastMessage).toLocaleString();
             const messageCount = conv.messages.length;
-            
-            convElement.innerHTML = `
-                <div class="history-item-content">
-                    <h4 class="history-title">${conv.title}</h4>
-                    <p class="history-meta">${messageCount} messages • ${lastMessageTime}</p>
-                </div>
-                <div class="history-actions">
-                    <button class="load-conversation-btn" onclick="chatInterface.loadConversation('${conv.id}')">
-                        <i class="fas fa-folder-open"></i>
-                    </button>
-                    <button class="delete-conversation-btn" onclick="chatInterface.deleteConversation('${conv.id}')">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
-            `;
-            
+
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'history-item-content';
+
+            const titleH4 = document.createElement('h4');
+            titleH4.className = 'history-title';
+            titleH4.textContent = conv.title;
+            contentDiv.appendChild(titleH4);
+
+            const metaP = document.createElement('p');
+            metaP.className = 'history-meta';
+            metaP.textContent = `${messageCount} messages • ${lastMessageTime}`;
+            contentDiv.appendChild(metaP);
+
+            const actionsDiv = document.createElement('div');
+            actionsDiv.className = 'history-actions';
+
+            const loadBtn = document.createElement('button');
+            loadBtn.className = 'load-conversation-btn';
+            loadBtn.onclick = () => this.loadConversation(conv.id);
+            const loadIcon = document.createElement('i');
+            loadIcon.className = 'fas fa-folder-open';
+            loadBtn.appendChild(loadIcon);
+            actionsDiv.appendChild(loadBtn);
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'delete-conversation-btn';
+            deleteBtn.onclick = () => this.deleteConversation(conv.id);
+            const deleteIcon = document.createElement('i');
+            deleteIcon.className = 'fas fa-trash';
+            deleteBtn.appendChild(deleteIcon);
+            actionsDiv.appendChild(deleteBtn);
+
+            convElement.appendChild(contentDiv);
+            convElement.appendChild(actionsDiv);
+
             this.historyList.appendChild(convElement);
         });
     }
-    
+
     filterHistory(searchTerm) {
         const historyItems = this.historyList.querySelectorAll('.history-item');
         const term = searchTerm.toLowerCase();
-        
+
         historyItems.forEach(item => {
             const title = item.querySelector('.history-title').textContent.toLowerCase();
             if (title.includes(term)) {
@@ -952,60 +1021,60 @@ class ChatInterface {
             }
         });
     }
-    
+
     loadConversation(conversationId) {
         const conversation = this.conversationHistory[conversationId];
         if (!conversation) return;
-        
+
         // Clear current chat
         this.chatMessages.innerHTML = '';
         this.messageHistory = [];
-        
+
         // Load conversation messages
         conversation.messages.forEach(msg => {
             this.addMessage(msg.content, msg.role === 'user' ? 'user' : 'bot');
             this.messageHistory.push({ role: msg.role, content: msg.content });
         });
-        
+
         this.currentConversationId = conversationId;
         this.renderHistoryList();
         this.toggleHistory(); // Close history panel
     }
-    
+
     deleteConversation(conversationId) {
         if (!confirm('Are you sure you want to delete this conversation?')) {
             return;
         }
-        
+
         delete this.conversationHistory[conversationId];
         this.saveConversationHistory();
         this.renderHistoryList();
-        
+
         // If deleted conversation was current, start new one
         if (conversationId === this.currentConversationId) {
             this.currentConversationId = this.generateConversationId();
         }
     }
-    
+
     toggleHistory() {
         this.historyPanel.classList.toggle('show');
     }
-    
+
     exportHistory() {
         const dataStr = JSON.stringify(this.conversationHistory, null, 2);
         const dataBlob = new Blob([dataStr], {type: 'application/json'});
-        
+
         const link = document.createElement('a');
         link.href = URL.createObjectURL(dataBlob);
         link.download = 'conversation_history.json';
         link.click();
     }
-    
+
     async loadModes() {
         try {
             const response = await fetch('/api/modes');
             const data = await response.json();
-            
+
             if (data.status === 'success') {
                 this.availableModes = data.modes;
                 this.currentMode = data.current_mode || 'normal';
@@ -1016,14 +1085,14 @@ class ChatInterface {
             console.error('Error loading modes:', error);
         }
     }
-    
+
     populateModeSelector() {
         const modeSelector = document.getElementById('modeSelector');
         if (!modeSelector) return;
-        
+
         // Clear existing options
         modeSelector.innerHTML = '';
-        
+
         // Add modes as options
         Object.entries(this.availableModes).forEach(([key, mode]) => {
             const option = document.createElement('option');
@@ -1035,20 +1104,20 @@ class ChatInterface {
             modeSelector.appendChild(option);
         });
     }
-    
+
     updateModeDisplay() {
         const modeSelector = document.getElementById('modeSelector');
         const modeDescription = document.getElementById('modeDescription');
-        
+
         if (modeSelector) {
             modeSelector.value = this.currentMode;
         }
-        
+
         if (modeDescription && this.availableModes[this.currentMode]) {
             modeDescription.textContent = this.availableModes[this.currentMode].description;
         }
     }
-    
+
     async switchMode(mode) {
         try {
             const response = await fetch('/api/mode', {
@@ -1058,13 +1127,13 @@ class ChatInterface {
                 },
                 body: JSON.stringify({ mode: mode })
             });
-            
+
             const data = await response.json();
-            
+
             if (data.status === 'success') {
                 this.currentMode = data.current_mode;
                 this.updateModeDisplay();
-                
+
                 // Add a message to chat indicating mode change
                 const modeInfo = this.availableModes[this.currentMode];
                 this.addMessage(`Switched to ${modeInfo.name}. ${modeInfo.description}`, 'bot');
@@ -1079,13 +1148,13 @@ class ChatInterface {
             this.updateModeDisplay();
         }
     }
-    
+
     startPlaceholderRotation() {
         if (!this.messageInput) return;
-        
+
         // Set initial placeholder
         this.messageInput.placeholder = this.placeholderSuggestions[0];
-        
+
         // Rotate placeholder every 3 seconds when input is empty
         setInterval(() => {
             if (this.messageInput.value.trim() === '') {
@@ -1132,7 +1201,7 @@ function switchMode(mode) {
 // Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     chatInterface = new ChatInterface();
-    
+
     // Add CSS for error messages
     const style = document.createElement('style');
     style.textContent = `
